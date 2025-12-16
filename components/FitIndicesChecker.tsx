@@ -7,12 +7,12 @@ interface FitIndicesCheckerProps {
 }
 
 const TOOLTIPS: Record<string, string> = {
-    'CFI': "Comparative Fit Index. > 0.95 Excellent, 0.90-0.94 Acceptable, < 0.90 Poor (Kline, 2023).",
-    'TLI': "Tucker-Lewis Index. > 0.95 Excellent, 0.90-0.94 Acceptable, < 0.90 Poor.",
-    'RMSEA': "Root Mean Square Error of Approximation. < 0.06 Good, 0.06-0.08 Acceptable, > 0.08 Poor (Hair et al., 2022).",
-    'SRMR': "Standardized Root Mean Square Residual. < 0.08 Good, > 0.08 Poor.",
-    'Chi-Square': "Should be non-significant (p > .05) ideally, but sensitive to sample size.",
-    'df': "Degrees of Freedom. Used to calculate Chi-Square/df ratio."
+    'CFI': "Comparative Fit Index (CFI): Values > 0.95 are excellent; 0.90–0.95 are acceptable. Values < 0.90 indicate poor fit. (Kline, 2023; Hair et al., 2022).",
+    'TLI': "Tucker-Lewis Index (TLI): Values > 0.95 are excellent; 0.90–0.95 are acceptable. Penalizes for model complexity. (Kline, 2023).",
+    'RMSEA': "Root Mean Square Error of Approximation (RMSEA): < 0.06 is good; 0.06–0.08 is acceptable; > 0.08 is poor. (Hair et al., 2022).",
+    'SRMR': "Standardized Root Mean Square Residual (SRMR): Values < 0.08 indicate good fit. (Hu & Bentler, 1999; Kline, 2023).",
+    'Chi-Square': "Chi-Square Test of Model Fit: Should ideally be non-significant (p > .05), but is highly sensitive to large sample sizes (N > 200).",
+    'df': "Degrees of Freedom (df): Used to calculate the Normed Chi-Square (Chi-Square/df), which should ideally be < 3.0 or < 5.0."
 };
 
 const FitIndicesChecker: React.FC<FitIndicesCheckerProps> = ({ isDarkMode }) => {
@@ -65,8 +65,8 @@ const FitIndicesChecker: React.FC<FitIndicesCheckerProps> = ({ isDarkMode }) => 
   const chisqDf = inputs.chisq / inputs.df;
 
   const inputClass = isDarkMode 
-    ? "px-3 py-2 border border-slate-600 bg-slate-800 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm font-mono" 
-    : "px-3 py-2 border border-gray-300 bg-white text-slate-900 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm font-mono";
+    ? "px-3 py-2 border border-slate-600 bg-slate-800 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm font-mono w-full" 
+    : "px-3 py-2 border border-gray-300 bg-white text-slate-900 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm font-mono w-full";
 
   return (
     <div className={`p-6 h-full overflow-y-auto ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'}`}>
@@ -88,10 +88,12 @@ const FitIndicesChecker: React.FC<FitIndicesCheckerProps> = ({ isDarkMode }) => 
             <div className="flex items-center gap-1 mb-1">
                 <label className={`text-xs font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{field.label}</label>
                 <HelpCircle size={12} className={`${isDarkMode ? 'text-slate-500' : 'text-gray-400'} cursor-help`} />
-                {/* Tooltip */}
-                <div className={`absolute bottom-full left-0 mb-2 w-48 p-2 rounded shadow-lg text-xs z-20 hidden group-hover:block ${isDarkMode ? 'bg-slate-800 text-slate-200 border border-slate-700' : 'bg-slate-800 text-white'}`}>
+                
+                {/* Tooltip on Hover */}
+                <div className={`absolute bottom-full left-0 mb-2 w-56 p-3 rounded-lg shadow-xl text-xs z-50 hidden group-hover:block transition-all opacity-0 group-hover:opacity-100 pointer-events-none border ${isDarkMode ? 'bg-slate-800 text-slate-200 border-slate-700' : 'bg-slate-900 text-white border-slate-800'}`}>
+                    <div className="font-bold mb-1 border-b pb-1 border-gray-500/30">{field.label} Criteria</div>
                     {TOOLTIPS[field.label]}
-                    <div className={`absolute top-full left-4 -mt-1 border-4 border-transparent ${isDarkMode ? 'border-t-slate-800' : 'border-t-slate-800'}`}></div>
+                    <div className={`absolute top-full left-4 -mt-1 border-4 border-transparent ${isDarkMode ? 'border-t-slate-800' : 'border-t-slate-900'}`}></div>
                 </div>
             </div>
             <input

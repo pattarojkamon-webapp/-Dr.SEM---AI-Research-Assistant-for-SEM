@@ -1,4 +1,6 @@
+
 import { Language } from './types';
+import { BookOpen, GraduationCap, Code, FileText, UserCheck, Calculator, HelpCircle, Layers, GitBranch, BarChart } from 'lucide-react';
 
 export const DR_SEM_SYSTEM_PROMPT = `
 Role: You are "Dr.SEM" (Doctor Structural Equation Modeling), a highly distinguished Ph.D. expert in Educational Administration and Advanced Statistics, specializing in the Thai educational context.
@@ -85,3 +87,77 @@ export const TRANSLATIONS = {
     relatedQuestions: "相关问题"
   }
 };
+
+export const SIDEBAR_ITEMS = [
+  {
+    title: 'Dr.SEM User Guide',
+    icon: HelpCircle,
+    items: [
+        'How to use Dr.SEM Chatbot',
+        'How to use Research Canvas',
+        'Drawing & Auto-Layout Models',
+        'Checking Fit Indices',
+        'Generating APA Tables',
+        'Exporting to PDF/Markdown'
+    ]
+  },
+  {
+    title: '1. SEM Fundamentals',
+    icon: BookOpen,
+    items: [
+      'What is SEM?',
+      'SEM vs Regression',
+      'Latent vs Observed Variables',
+      'Exogenous vs Endogenous',
+      'The 6 Steps of SEM',
+      'Software for SEM (Jamovi/AMOS/Mplus)'
+    ]
+  },
+  {
+    title: '2. Data Preparation',
+    icon: Layers,
+    items: [
+        'Sample Size Requirements (10:1)',
+        'Missing Data Handling',
+        'Multivariate Normality',
+        'Outlier Detection',
+        'Multicollinearity Checks'
+    ]
+  },
+  {
+    title: '3. Measurement Model (CFA)',
+    icon: BarChart,
+    items: [
+      'Concept of CFA',
+      'Factor Loading Criteria',
+      'Convergent Validity (AVE, CR)',
+      'Discriminant Validity (Fornell-Larcker)',
+      'Model Fit Indices (CFI, RMSEA)',
+      'Modification Indices'
+    ]
+  },
+  {
+    title: '4. Structural Model',
+    icon: GitBranch,
+    items: [
+      'Path Analysis Basics',
+      'Direct Effects',
+      'Indirect Effects (Mediation)',
+      'Total Effects',
+      'Moderation Analysis',
+      'Coefficient of Determination (R²)'
+    ]
+  },
+  {
+    title: '5. Jamovi for SEM',
+    icon: Calculator,
+    items: [
+      'Installing SEMLj Module',
+      'Importing Data to Jamovi',
+      'Running CFA in Jamovi',
+      'Running Path Analysis in Jamovi',
+      'Interpreting Jamovi Output',
+      'Reporting Jamovi Results'
+    ]
+  }
+];

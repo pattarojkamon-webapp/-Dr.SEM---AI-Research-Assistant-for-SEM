@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import ChatPanel from './components/ChatPanel';
 import ToolsPanel from './components/ToolsPanel';
-import { Message, Sender, ToolMode, Language, Node, Link } from './types';
+import Sidebar from './components/Sidebar';
+import { Message, Sender, ToolMode, Language, Node, Link, Theme } from './types';
 import { sendMessageToGemini } from './services/geminiService';
 import { TRANSLATIONS } from './constants';
-import { AlertTriangle, Sparkles } from 'lucide-react';
+import { AlertTriangle, Sparkles, GripVertical, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 function App() {
   // State
@@ -23,7 +25,16 @@ function App() {
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
   const [language, setLanguage] = useState<Language>(Language.TH);
   const [suggestedTool, setSuggestedTool] = useState<ToolMode | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // Theme State
+  const [theme, setTheme] = useState<Theme>('light');
+
+  // Sidebar State
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // Resizable Panel State
+  const [leftPanelWidth, setLeftPanelWidth] = useState(40); // Percentage
+  const [isDragging, setIsDragging] = useState(false);
 
   // Persistence
   useEffect(() => {
@@ -47,10 +58,11 @@ function App() {
 
     if (savedNodes) setNodes(JSON.parse(savedNodes));
     if (savedLinks) setLinks(JSON.parse(savedLinks));
-    if (savedTheme === 'dark') setIsDarkMode(true);
+    if (savedTheme) setTheme(savedTheme as Theme);
     
-    // Check API Key
-    if (!process.env.API_KEY) checkApiKey();
+    // Check API Key safely
+    const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : undefined;
+    if (!apiKey) checkApiKey();
   }, []);
 
   useEffect(() => {
@@ -68,13 +80,52 @@ function App() {
   }, [links]);
 
   useEffect(() => {
-    localStorage.setItem('drsem_theme', isDarkMode ? 'dark' : 'light');
-    if (isDarkMode) {
-        document.documentElement.classList.add('dark');
-    } else {
-        document.documentElement.classList.remove('dark');
+    localStorage.setItem('drsem_theme', theme);
+    document.documentElement.className = ''; // Clear previous classes
+    if (theme === 'dark') document.documentElement.classList.add('dark');
+    // For other themes, we handle them via React props, but could add global classes if needed
+  }, [theme]);
+
+  const cycleTheme = () => {
+      const themes: Theme[] = ['light', 'dark', 'corporate', 'academic'];
+      const currentIndex = themes.indexOf(theme);
+      const nextTheme = themes[(currentIndex + 1) % themes.length];
+      setTheme(nextTheme);
+  };
+
+  // Resizer Logic
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    e.preventDefault();
+  };
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (isDragging) {
+      const newWidth = (e.clientX / window.innerWidth) * 100;
+      if (newWidth > 20 && newWidth < 80) {
+        setLeftPanelWidth(newWidth);
+      }
     }
-  }, [isDarkMode]);
+  }, [isDragging]);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    } else {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
 
   const checkApiKey = async () => {
       try {
@@ -91,6 +142,8 @@ function App() {
       if ((window as any).aistudio && (window as any).aistudio.openSelectKey) {
           await (window as any).aistudio.openSelectKey();
           setApiKeyMissing(false);
+      } else {
+          alert("API Key configuration is missing. If you are deploying to Vercel, please set the 'API_KEY' environment variable in your project settings.");
       }
   }
 
@@ -161,6 +214,11 @@ function App() {
     }
   };
 
+  const handleMenuSelect = (topic: string) => {
+    const prompt = `Can you explain about "${topic}" in the context of SEM research? Please guide me step-by-step or provide examples.`;
+    handleSendMessage(prompt);
+  };
+
   if (apiKeyMissing) {
       return (
           <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
@@ -174,8 +232,61 @@ function App() {
       )
   }
 
+  // Helper for background colors based on theme
+  const getAppBackground = () => {
+      switch(theme) {
+          case 'dark': return 'bg-slate-950 text-slate-100';
+          case 'corporate': return 'bg-slate-50 text-slate-900';
+          case 'academic': return 'bg-[#fdfbf7] text-[#333]'; // Warm paper-like
+          default: return 'bg-gray-50 text-slate-900';
+      }
+  };
+
+  const getBorderColor = () => {
+      switch(theme) {
+          case 'dark': return 'border-slate-800';
+          case 'corporate': return 'border-blue-200';
+          case 'academic': return 'border-[#e5e0d8]';
+          default: return 'border-gray-200';
+      }
+  };
+
   return (
-    <div className={`flex h-screen overflow-hidden flex-col md:flex-row relative transition-colors duration-300 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-gray-50 text-slate-900'}`}>
+    <div className={`flex h-screen overflow-hidden flex-col md:flex-row relative transition-colors duration-300 ${getAppBackground()}`}>
+      
+      {/* Sidebar - Desktop */}
+      <div className="hidden md:flex h-full flex-shrink-0">
+         <Sidebar 
+            isOpen={isSidebarOpen} 
+            setIsOpen={setIsSidebarOpen} 
+            onSelectTopic={handleMenuSelect}
+            theme={theme}
+         />
+         
+         {/* Sidebar Toggle Button (Sticky) */}
+         <button 
+           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+           className={`self-center p-1 -ml-3 z-30 rounded-full shadow border transition-colors ${
+               theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-400' : 
+               theme === 'corporate' ? 'bg-white border-blue-200 text-blue-500' :
+               theme === 'academic' ? 'bg-[#fffefb] border-[#e5e0d8] text-[#5d4037]' :
+               'bg-white border-gray-200 text-gray-500'
+           }`}
+         >
+           {isSidebarOpen ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
+         </button>
+      </div>
+
+      {/* Sidebar - Mobile */}
+      <div className="md:hidden">
+         <Sidebar 
+            isOpen={isSidebarOpen} 
+            setIsOpen={setIsSidebarOpen} 
+            onSelectTopic={handleMenuSelect}
+            theme={theme}
+         />
+      </div>
+
       {/* Toast Suggestion */}
       {suggestedTool && suggestedTool !== activeTool && (
           <div className="absolute top-20 right-4 md:right-[50%] z-50 bg-slate-800 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-bounce-in border border-slate-700">
@@ -194,21 +305,51 @@ function App() {
           </div>
       )}
 
-      {/* Left: Chat */}
-      <div className={`w-full md:w-1/2 lg:w-5/12 h-[60%] md:h-full z-10 shadow-xl flex flex-col transition-colors ${isDarkMode ? 'bg-slate-900 border-r border-slate-800' : 'bg-white border-r border-gray-200'}`}>
+      {/* Left: Chat - Resizable */}
+      <div 
+        className={`h-[60%] md:h-full z-10 shadow-xl flex flex-col transition-colors ${
+            theme === 'dark' ? 'bg-slate-900 border-r border-slate-800' :
+            theme === 'corporate' ? 'bg-white border-r border-blue-100' :
+            theme === 'academic' ? 'bg-[#fffefb] border-r border-[#e5e0d8]' :
+            'bg-white border-r border-gray-200'
+        }`}
+        style={{ width: window.innerWidth >= 768 ? `${leftPanelWidth}%` : '100%' }}
+      >
         <ChatPanel 
             messages={messages} 
             isLoading={isLoading} 
             language={language}
             onLanguageChange={setLanguage}
             onSendMessage={handleSendMessage}
-            isDarkMode={isDarkMode}
-            onToggleTheme={() => setIsDarkMode(!isDarkMode)}
+            theme={theme}
+            onToggleTheme={cycleTheme}
         />
       </div>
 
-      {/* Right: Tools */}
-      <div className={`w-full md:w-1/2 lg:w-7/12 h-[40%] md:h-full border-t md:border-l md:border-t-0 flex flex-col transition-colors ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-gray-200'}`}>
+      {/* Resizer Handle (Desktop only) */}
+      <div 
+        className={`hidden md:flex w-2 cursor-col-resize items-center justify-center hover:bg-opacity-50 transition-colors z-20 ${
+            isDragging ? 'bg-cyan-500' : 
+            theme === 'dark' ? 'bg-slate-950 text-slate-600' : 
+            theme === 'corporate' ? 'bg-blue-50 text-blue-300' :
+            theme === 'academic' ? 'bg-[#f0ece5] text-[#8d6e63]' :
+            'bg-gray-100 text-gray-400'
+        }`}
+        onMouseDown={handleMouseDown}
+      >
+          <GripVertical size={16} />
+      </div>
+
+      {/* Right: Tools - Resizable */}
+      <div 
+        className={`h-[40%] md:h-full border-t md:border-t-0 flex flex-col transition-colors ${
+            theme === 'dark' ? 'bg-slate-950 border-slate-800' :
+            theme === 'corporate' ? 'bg-slate-50 border-blue-100' :
+            theme === 'academic' ? 'bg-[#fdfbf7] border-[#e5e0d8]' :
+            'bg-slate-50 border-gray-200'
+        }`}
+        style={{ width: window.innerWidth >= 768 ? `${100 - leftPanelWidth}%` : '100%' }}
+      >
         <div className="flex-1 overflow-hidden">
             <ToolsPanel 
                 activeMode={activeTool} 
@@ -218,11 +359,16 @@ function App() {
                 setNodes={setNodes}
                 links={links}
                 setLinks={setLinks}
-                isDarkMode={isDarkMode}
+                theme={theme}
             />
         </div>
         {/* Footer */}
-        <div className={`p-2 text-[10px] text-center font-light tracking-wide border-t transition-colors ${isDarkMode ? 'bg-slate-950 text-slate-500 border-slate-900' : 'bg-slate-900 text-slate-400 border-slate-800'}`}>
+        <div className={`p-2 text-[10px] text-center font-light tracking-wide border-t transition-colors ${
+            theme === 'dark' ? 'bg-slate-950 text-slate-500 border-slate-900' : 
+            theme === 'corporate' ? 'bg-white text-blue-400 border-blue-50' :
+            theme === 'academic' ? 'bg-[#fdfbf7] text-[#8d6e63] border-[#e5e0d8]' :
+            'bg-slate-900 text-slate-400 border-slate-800'
+        }`}>
             {TRANSLATIONS[language].footer}
         </div>
       </div>

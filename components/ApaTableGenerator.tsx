@@ -14,7 +14,11 @@ Leadership, 0.85, 0.88, 0.62
 Infrastructure, 0.78, 0.81, 0.54
 Quality, 0.91, 0.93, 0.70`
   );
-  const [title, setTitle] = useState('Table 1\nReliability and Validity Analysis');
+  
+  // Split title state for APA 7th compliance
+  const [tableNum, setTableNum] = useState('Table 1');
+  const [tableTitle, setTableTitle] = useState('Reliability and Validity Analysis');
+  
   const [note, setNote] = useState('Note. CR = Composite Reliability; AVE = Average Variance Extracted.');
   const [hiddenColumns, setHiddenColumns] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
@@ -37,7 +41,8 @@ Quality, 0.91, 0.93, 0.70`
   };
 
   const handleCopyMarkdown = () => {
-    let mdTable = `**${title.replace('\n', '**  \n*')}*\n\n`;
+    // APA 7th Markdown: Bold Table Num, Italic Title, Newline between
+    let mdTable = `**${tableNum}**  \n*${tableTitle}*\n\n`;
     mdTable += `| ${header.join(' | ')} |\n`;
     mdTable += `| ${header.map(() => '---').join(' | ')} |\n`;
     body.forEach(row => {
@@ -53,23 +58,21 @@ Quality, 0.91, 0.93, 0.70`
   const handleExportPDF = () => {
     const doc = new jsPDF();
     
-    // Title
+    // Table Number (Bold)
     doc.setFont("times", "bold");
     doc.setFontSize(12);
-    const titleLines = title.split('\n');
-    doc.text(titleLines[0], 14, 15);
+    doc.text(tableNum, 14, 15);
     
-    if (titleLines[1]) {
-        doc.setFont("times", "italic");
-        doc.setFontSize(12);
-        doc.text(titleLines[1], 14, 22);
-    }
+    // Table Title (Italic, below number)
+    doc.setFont("times", "italic");
+    doc.setFontSize(12);
+    doc.text(tableTitle, 14, 22);
 
     // Table
     autoTable(doc, {
         head: [header],
         body: body,
-        startY: titleLines.length > 1 ? 28 : 20,
+        startY: 28,
         theme: 'plain',
         styles: { font: "times", fontSize: 10, cellPadding: 2, lineColor: 0, lineWidth: 0 },
         headStyles: { fontStyle: 'bold', borderBottomWidth: 1.5, borderColor: 0 }, // Thick bottom border for header
@@ -90,7 +93,7 @@ Quality, 0.91, 0.93, 0.70`
     const splitNote = doc.splitTextToSize(note, 180);
     doc.text(splitNote, 14, finalY + 5);
 
-    doc.save('APA_Table_DrSEM.pdf');
+    doc.save(`${tableNum.replace(/\s/g, '_')}_APA.pdf`);
   };
 
   const inputClass = isDarkMode
@@ -103,18 +106,33 @@ Quality, 0.91, 0.93, 0.70`
     <div className={`p-6 h-full overflow-y-auto ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'}`}>
       <div className="mb-6">
         <h3 className={`text-xl font-bold font-serif mb-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>APA Table Generator</h3>
-        <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Configure and export your statistical tables.</p>
+        <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Configure and export your statistical tables (APA 7th).</p>
       </div>
 
       <div className="space-y-4 mb-6">
-          <div>
-            <label className={labelClass}>Table Title</label>
-            <textarea 
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                className={`${inputClass} h-16`}
-            />
+          <div className="flex gap-4">
+              <div className="w-1/3">
+                <label className={labelClass}>Table Number</label>
+                <input 
+                    type="text"
+                    value={tableNum}
+                    onChange={e => setTableNum(e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. Table 1"
+                />
+              </div>
+              <div className="flex-1">
+                <label className={labelClass}>Table Title</label>
+                <input 
+                    type="text"
+                    value={tableTitle}
+                    onChange={e => setTableTitle(e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. Means, Standard Deviations, and Correlations"
+                />
+              </div>
           </div>
+
           <div>
             <label className={labelClass}>CSV Data Input</label>
             <textarea
@@ -176,8 +194,8 @@ Quality, 0.91, 0.93, 0.70`
       {/* Preview */}
       <div className={`p-6 border shadow-sm rounded-lg min-h-[200px] overflow-x-auto ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-200'}`}>
          <div className={`font-serif mb-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>
-            <div className="font-bold">{title.split('\n')[0]}</div>
-            <div className="italic">{title.split('\n')[1]}</div>
+            <div className="font-bold">{tableNum}</div>
+            <div className="italic">{tableTitle}</div>
          </div>
          <table className="w-full text-left border-collapse mb-2 min-w-full">
             <thead>

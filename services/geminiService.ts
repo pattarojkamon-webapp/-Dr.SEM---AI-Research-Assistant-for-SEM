@@ -2,7 +2,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { DR_SEM_SYSTEM_PROMPT } from '../constants';
 
 const getClient = () => {
-    const apiKey = process.env.API_KEY;
+    // Safely check for process.env.API_KEY to avoid crashes in browsers/Vercel
+    const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : undefined;
     if (!apiKey) {
         throw new Error("API Key is missing. Please select an API key.");
     }

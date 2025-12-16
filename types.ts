@@ -1,3 +1,4 @@
+
 export enum Sender {
   USER = 'user',
   AI = 'ai'
@@ -8,6 +9,8 @@ export enum Language {
   EN = 'en',
   CN = 'cn'
 }
+
+export type Theme = 'light' | 'dark' | 'corporate' | 'academic';
 
 export interface Attachment {
   type: 'image' | 'file';
@@ -37,7 +40,9 @@ export enum ToolMode {
   CONCEPTUAL = 'conceptual',
   FIT_CHECKER = 'fit_checker',
   APA_TABLE = 'apa_table',
-  JAMOVI = 'jamovi'
+  JAMOVI = 'jamovi',
+  SAMPLE_SIZE = 'sample_size',
+  VALIDITY = 'validity'
 }
 
 export interface Node {
